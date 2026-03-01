@@ -36,11 +36,13 @@ app.get('/', (req, res) => {
     <head><title>API Eneris Proposta</title></head>
     <body style="font-family:sans-serif;max-width:700px;margin:40px auto;padding:0 20px;">
       <h1>API Eneris Proposta</h1>
+      <p style="color:#666;margin-bottom:12px;">Formato padrão: <b>html</b> (imagem embutida). Use <code>?formato=png</code> para binário direto, <code>?formato=pdf</code> para PDF, <code>?formato=base64</code> para JSON.</p>
       <ul>
         <li><a href="/health">/health</a></li>
-        <li><a href="/gerar-proposta/pagina1?nome=Cliente&consumo=1800">/gerar-proposta/pagina1?nome=Cliente&consumo=1800</a> — Mapeamento</li>
-        <li><a href="/gerar-proposta/pagina2?consumo=1800">/gerar-proposta/pagina2?consumo=1800</a> — Preços</li>
-        <li><a href="/gerar-proposta?nome=Cliente&consumo=1800">/gerar-proposta?nome=Cliente&consumo=1800</a> — Ambas (JSON)</li>
+        <li><a href="/gerar-proposta/pagina1?nome=Cliente&consumo=1800">/gerar-proposta/pagina1?nome=Cliente&amp;consumo=1800</a> — Mapeamento (HTML)</li>
+        <li><a href="/gerar-proposta/pagina2?nome=Cliente&consumo=1800">/gerar-proposta/pagina2?nome=Cliente&amp;consumo=1800</a> — Preços (HTML)</li>
+        <li><a href="/gerar-proposta/pagina1?nome=Cliente&consumo=1800&formato=png">/gerar-proposta/pagina1?formato=png</a> — Mapeamento (PNG direto)</li>
+        <li><a href="/gerar-proposta?nome=Cliente&consumo=1800">/gerar-proposta?nome=Cliente&amp;consumo=1800</a> — Ambas (JSON base64)</li>
       </ul>
     </body></html>
   `);
@@ -127,11 +129,16 @@ async function takeScreenshot(page) {
 // ============================================================
 // GET /gerar-proposta/pagina1 — Mapeamento de Cargas
 // GET /gerar-proposta/pagina2 — Proposta Orientativa
+//
+// ?formato=html  → página HTML com imagem embutida (padrão, funciona em qualquer proxy)
+// ?formato=png   → binário PNG direto (Content-Type: image/png)
+// ?formato=pdf   → PDF direto
+// ?formato=base64 → JSON com base64
 // ============================================================
 async function gerarScreenshot(req, res, templateFile) {
   const nome = req.query.nome || 'Cliente';
   const consumo = req.query.consumo || '1800';
-  const formato = req.query.formato || 'png';
+  const formato = req.query.formato || 'html';
 
   let browser;
   try {
@@ -148,9 +155,47 @@ async function gerarScreenshot(req, res, templateFile) {
 
     const screenshot = await takeScreenshot(page);
     await page.close();
-    res.set('Content-Type', 'image/png');
-    res.set('Content-Disposition', `inline; filename="proposta-${nome}.png"`);
-    return res.send(screenshot);
+    const b64 = screenshot.toString('base64');
+
+    // formato=base64 → JSON
+    if (formato === 'base64') {
+      return res.json({
+        cliente: nome,
+        consumo_kwh: consumo,
+        formato: 'png',
+        base64: b64,
+        filename: `proposta-${nome}.png`
+      });
+    }
+
+    // formato=png → binário direto
+    if (formato === 'png') {
+      res.set('Content-Type', 'image/png');
+      res.set('Content-Length', screenshot.length);
+      res.set('Content-Disposition', `inline; filename="proposta-${nome}.png"`);
+      return res.end(screenshot);
+    }
+
+    // formato=html (padrão) → página HTML com imagem base64 embutida
+    // Isso SEMPRE funciona, independente do proxy
+    return res.send(`<!DOCTYPE html>
+<html><head>
+<meta charset="utf-8">
+<title>Proposta - ${nome}</title>
+<style>
+  * { margin: 0; padding: 0; }
+  body { background: #1a1a1a; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; }
+  img { max-width: 100%; height: auto; display: block; }
+  .actions { position: fixed; top: 10px; right: 10px; z-index: 10; }
+  .actions a { background: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-family: sans-serif; font-size: 14px; }
+  .actions a:hover { background: #45a049; }
+</style>
+</head><body>
+<div class="actions">
+  <a href="data:image/png;base64,${b64}" download="proposta-${nome}.png">⬇ Baixar PNG</a>
+</div>
+<img src="data:image/png;base64,${b64}" alt="Proposta ${nome}" />
+</body></html>`);
 
   } catch (err) {
     console.error('[screenshot] ERRO:', err.message, err.stack);

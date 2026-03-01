@@ -5,6 +5,9 @@ const path = require('path');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Chromium do sistema (Docker) ou Puppeteer bundled (local)
+const CHROMIUM_PATH = process.env.PUPPETEER_EXECUTABLE_PATH || null;
+
 // Serve os templates HTML estáticos
 app.use('/templates', express.static(path.join(__dirname, 'templates')));
 
@@ -46,22 +49,29 @@ app.get('/gerar-proposta', async (req, res) => {
 
   let browser;
   try {
+    console.log(`[gerar-proposta] nome=${nome} consumo=${consumo} pagina=${pagina} formato=${formato}`);
     browser = await puppeteer.launch({
-      headless: 'new',
+      headless: true,
+      executablePath: CHROMIUM_PATH || undefined,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
         '--disable-gpu',
-        '--font-render-hinting=none'
+        '--disable-software-rasterizer',
+        '--font-render-hinting=none',
+        '--single-process'
       ]
     });
+    console.log('[gerar-proposta] Browser iniciado');
 
     // Se só uma página, retorna direto
     if (urls.length === 1) {
       const page = await browser.newPage();
       await page.setViewport({ width: 1280, height: 900 });
-      await page.goto(urls[0].url, { waitUntil: 'networkidle0', timeout: 60000 });
+      await page.goto(urls[0].url, { waitUntil: 'networkidle2', timeout: 60000 });
+      await page.waitForSelector('body', { timeout: 10000 });
+      await new Promise(r => setTimeout(r, 1000)); // aguarda renderização
 
       if (formato === 'pdf') {
         const pdf = await page.pdf({ format: 'A4', landscape: true, printBackground: true });
@@ -82,7 +92,9 @@ app.get('/gerar-proposta', async (req, res) => {
     for (const item of urls) {
       const page = await browser.newPage();
       await page.setViewport({ width: 1280, height: 900 });
-      await page.goto(item.url, { waitUntil: 'networkidle0', timeout: 60000 });
+      await page.goto(item.url, { waitUntil: 'networkidle2', timeout: 60000 });
+      await page.waitForSelector('body', { timeout: 10000 });
+      await new Promise(r => setTimeout(r, 1000));
 
       if (formato === 'pdf') {
         const pdf = await page.pdf({ format: 'A4', landscape: true, printBackground: true });
@@ -126,17 +138,30 @@ async function gerarScreenshot(req, res, templateFile) {
   const formato = req.query.formato || 'png';
 
   const url = `http://localhost:${PORT}/templates/${templateFile}?nome=${encodeURIComponent(nome)}&consumo=${consumo}`;
+  console.log(`[screenshot] ${templateFile} nome=${nome} consumo=${consumo} url=${url}`);
 
   let browser;
   try {
     browser = await puppeteer.launch({
-      headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+      headless: true,
+      executablePath: CHROMIUM_PATH || undefined,
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--disable-gpu',
+        '--disable-software-rasterizer',
+        '--font-render-hinting=none',
+        '--single-process'
+      ]
     });
+    console.log('[screenshot] Browser iniciado');
 
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 900 });
-    await page.goto(url, { waitUntil: 'networkidle0', timeout: 60000 });
+    await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
+    await page.waitForSelector('body', { timeout: 10000 });
+    await new Promise(r => setTimeout(r, 1000)); // aguarda renderização completa
 
     if (formato === 'pdf') {
       const pdf = await page.pdf({ format: 'A4', landscape: true, printBackground: true });
@@ -146,15 +171,24 @@ async function gerarScreenshot(req, res, templateFile) {
     }
 
     const screenshot = await page.screenshot({ fullPage: true, type: 'png' });
+    console.log(`[screenshot] Gerado com sucesso: ${screenshot.length} bytes`);
+
+    if (!screenshot || screenshot.length < 1000) {
+      throw new Error(`Screenshot inválido (${screenshot ? screenshot.length : 0} bytes)`);
+    }
+
     res.set('Content-Type', 'image/png');
     res.set('Content-Disposition', `attachment; filename="proposta-${nome}.png"`);
     return res.send(screenshot);
 
   } catch (err) {
-    console.error('Erro ao gerar proposta:', err);
+    console.error('[screenshot] ERRO:', err.message);
+    console.error(err.stack);
     res.status(500).json({ error: 'Erro ao gerar proposta', details: err.message });
   } finally {
-    if (browser) await browser.close();
+    if (browser) {
+      try { await browser.close(); } catch(e) { /* ignore */ }
+    }
   }
 }
 

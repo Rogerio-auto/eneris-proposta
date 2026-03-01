@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Proposta Orientativa</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Montserrat', sans-serif; background: #f3faee; }
+    .container { display: flex; flex-direction: row; min-height: 100vh; }
+    .left { width: 40%; padding: 3rem; background: #f3faee; display: flex; flex-direction: column; justify-content: center; }
+    .badge { border: 2px solid #1d2e3b; padding: 4px 16px; border-radius: 40px; font-weight: 600; width: fit-content; margin-bottom: 2rem; }
+    .left h2 { font-size: 2rem; margin-bottom: 1rem; }
+    .left strong { font-weight: 700; }
+    .left ul { margin-bottom: 2rem; }
+    .left li { margin-bottom: 1rem; font-size: 1rem; }
+    .note { background: #00263d; color: white; padding: 1rem; border-radius: 8px; font-size: 0.9rem; }
+    .right { width: 60%; padding: 3rem; background: #baf3c0; }
+    .right h1 { text-align: center; color: #00263d; margin-bottom: 1.5rem; }
+    .right h1 small { display: block; font-weight: 400; font-size: 1rem; margin-top: 5px; }
+    table { width: 100%; background: white; border-collapse: collapse; border-radius: 12px; overflow: hidden; }
+    th { background: #00263d; color: white; padding: 1rem; }
+    td { text-align: center; padding: 1.2rem; border-bottom: 1px solid #eee; }
+    .footer { margin-top: 1.5rem; font-size: 0.85rem; color: #1d2e3b; }
+    @media (max-width: 768px) { .container { flex-direction: column; } .left, .right { width: 100%; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left">
+      <div class="badge">PREÇOS ORIENTATIVOS</div>
+      <h2>Opção <strong>ENER IS</strong></h2>
+      <ul>
+        <li><strong>Garantia:</strong> Inversores 10 anos, Baterias 7 anos, Instalação e Assistência Técnica 1 ano.</li>
+        <li><strong>Instalação:</strong> valor de instalação NÍVEL BÁSICO incluso no preço ao lado (ver tabela de Instalações).</li>
+      </ul>
+      <div class="note">
+        O Nível de Instalação pode ser alterado em função de particularidades apontadas pela <strong>Visita Técnica</strong> a ser realizada.
+      </div>
+    </div>
+
+    <div class="right">
+      <h1>PROPOSTA ORIENTATIVA<br><small>Fale com um especialista</small></h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Cenário</th>
+            <th>Equipamentos</th>
+            <th>Capacidade</th>
+            <th>Preço Orientativo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr id="row1">
+            <td class="scenario"></td>
+            <td class="equip"></td>
+            <td class="cap"></td>
+            <td class="price"></td>
+          </tr>
+          <tr id="row2">
+            <td class="scenario"></td>
+            <td class="equip"></td>
+            <td class="cap"></td>
+            <td class="price"></td>
+          </tr>
+          <tr id="row3">
+            <td class="scenario"></td>
+            <td class="equip"></td>
+            <td class="cap"></td>
+            <td class="price"></td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="footer">
+        <p><strong>Inversor:</strong> Inversores para fins orientativos, foi simulado o preço com 1 inversor de 5kW. O mesmo pode ser insuficiente para alguns cenários como o FULL 100%.</p>
+        <p><strong>Fale com um consultor para adequar a proposta para a sua realidade!</strong></p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      // --- Entrada ---
+      const urlParams = new URLSearchParams(window.location.search);
+      const consumoMensal = parseFloat(urlParams.get("consumo")) || 0; // kWh/mês
+
+      // --- Constantes (iguais à planilha) ---
+      const capacidadePorBateria_kWh = 5; // usa 5 (não 5,12) na fórmula da planilha
+      const capacidadePorBateriaTexto_kWh = 5.12; // apenas para exibir no texto
+      const horasOpcoes = [2, 4, 6]; // as três autonomias usadas para gerar 1ª, 2ª, 3ª opção
+
+      // Tabela de preços "SEM PLACAS" (1 a 10 baterias)
+      const precosSemPlacas = {
+        1: 40000, 2: 52000, 3: 64000, 4: 76000, 5: 88000,
+        6: 100000, 7: 112000, 8: 124000, 9: 136000, 10: 148000
+      };
+
+      // --- Cálculo do consumo horário (kWh/h) ---
+      const consumoHorario = consumoMensal > 0 ? (consumoMensal / 30 / 24) : 0;
+
+      // --- Gera as três quantidades de baterias, como na planilha ---
+      // baterias = ARREDONDAR.PARA.CIMA( horas * consumoHorario / 5 ; 0 )
+      const quantidades = horasOpcoes.map(h =>
+        Math.ceil((h * consumoHorario) / capacidadePorBateria_kWh)
+      );
+
+      // Garante que cada cenário tenha pelo menos 1 bateria a mais que o anterior
+      for (let i = 1; i < quantidades.length; i++) {
+        if (quantidades[i] <= quantidades[i - 1]) {
+          quantidades[i] = quantidades[i - 1] + 1;
+        }
+      }
+
+      // --- Monta as três linhas da tabela ---
+      const rows = [1, 2, 3].map(i => document.getElementById(`row${i}`));
+
+      function formatBRL(v) {
+        return v.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      }
+
+      rows.forEach((row, idx) => {
+        const q = quantidades[idx];           // quantidade de baterias
+        const h = horasOpcoes[idx];           // horas associadas (2,4,6)
+        const preco = precosSemPlacas[q];     // pode ser undefined
+
+        // Cenário
+        row.querySelector(".scenario").textContent = `${q} bateria${q > 1 ? 's' : ''}`;
+
+        // Equipamentos
+        row.querySelector(".equip").innerHTML =
+          `1 inversor 5kW<br>${q} bateria${q > 1 ? 's' : ''} ${capacidadePorBateriaTexto_kWh.toFixed(2).replace('.', ',')}kWh`;
+
+        // Capacidade (5kW do inversor + soma das baterias em kWh para texto)
+        const totalCap = (q * capacidadePorBateriaTexto_kWh).toFixed(2).replace('.', ',');
+        row.querySelector(".cap").innerHTML = `5kW<br>${totalCap}kWh`;
+
+        // Preço
+        row.querySelector(".price").textContent =
+          (q > 10 || !preco) ? "Consultar especialista" : `R$ ${formatBRL(preco)}`;
+      });
+
+      // Caso o usuário não informe consumo na URL
+      if (consumoMensal <= 0) {
+        rows.forEach((row) => {
+          row.querySelector(".scenario").textContent = "–";
+          row.querySelector(".equip").textContent = "Informe ?consumo=valor_em_kWh_mês";
+          row.querySelector(".cap").textContent = "–";
+          row.querySelector(".price").textContent = "–";
+        });
+      }
+    });
+  </script>
+</body>
+</html>

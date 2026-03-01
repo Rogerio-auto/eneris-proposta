@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relatório de Consumo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body, body * {
+      font-family: 'Montserrat'!important;
+    }
+
+    body {
+      background: linear-gradient(135deg, rgb(0, 38, 61) 0%, rgb(0, 38, 61) 100%);
+      min-height: 100vh;
+      color: white;
+      font-size: 18px;
+    }
+
+    .container {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .left-panel {
+      background: linear-gradient(135deg, rgb(0, 38, 61) 0%, rgb(0, 38, 61) 100%);
+      width: 40%;
+      padding: 3rem 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .left-panel::before {
+      content: '';
+      position: absolute;
+      bottom: -50px;
+      right: -50px;
+      width: 200px;
+      height: 200px;
+      background: linear-gradient(45deg, rgb(138, 238, 158) 0%, rgb(138, 238, 158) 100%);
+      clip-path: polygon(0 0, 100% 0, 100% 70%, 30% 100%);
+      opacity: 0.8;
+    }
+
+    .title {
+      font-size: 4.5rem;
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 2.5rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .title .highlight {
+      color: rgb(138, 238, 158);
+      font-weight: 600;
+    }
+
+    .info-text {
+      font-size: 1.3rem;
+      line-height: 1.8;
+      margin-bottom: 2rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .info-text strong {
+      color: rgb(138, 238, 158);
+    }
+
+    .bullet-point {
+      margin-bottom: 1rem;
+      padding-left: 1rem;
+      border-left: 3px solid rgb(138, 238, 158);
+    }
+
+    .right-panel {
+      width: 60%;
+      padding: 2rem;
+      background: rgb(246, 255, 235);
+      color: #333;
+    }
+
+    .scenarios-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .scenarios-title {
+      font-size: 2.2rem;
+      color: rgb(0, 38, 61);
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .scenarios-subtitle {
+      color: #666;
+      font-size: 1.1rem;
+    }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      margin-bottom: 2rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th {
+      background: rgb(0, 38, 61);
+      color: white;
+      padding: 1.2rem;
+      font-weight: 600;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .scenario-header {
+      background: rgb(138, 238, 158);
+      color: rgb(0, 38, 61);
+      font-weight: 700;
+    }
+
+    td {
+      padding: 1.5rem 1.2rem;
+      text-align: center;
+      border-bottom: 1px solid #e9ecef;
+      font-weight: 500;
+      font-size: 1.3rem;
+      line-height: 1.4;
+    }
+
+    .scenario-name {
+      background: rgb(246, 255, 235);
+      font-weight: 600;
+      color: rgb(0, 38, 61);
+      white-space: nowrap;
+    }
+
+    .power-row {
+      background-color: #f8f9fa;
+      font-weight: 500;
+    }
+    
+    .power-row td {
+      padding: 1.2rem 1.2rem;
+      font-size: 1.4rem;
+      color: #444;
+      font-weight: 600;
+    }
+    
+    .kwh-value {
+      font-weight: 500;
+      font-size: 1.3em;
+      display: block;
+      margin-top: 0.3rem;
+    }
+
+    .consumption-section {
+      background: rgb(0, 38, 61);
+      color: white;
+      padding: 1.5rem;
+      border-radius: 12px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .consumption-section::before {
+      content: '';
+      position: absolute;
+      top: -50px;
+      left: -50px;
+      width: 150px;
+      height: 150px;
+      background: linear-gradient(45deg, rgb(138, 238, 158) 0%, rgb(138, 238, 158) 100%);
+      clip-path: polygon(30% 0%, 100% 0, 70% 100%, 0% 100%);
+      opacity: 0.3;
+    }
+
+    .consumption-title {
+      font-size: 1.2rem;
+      margin-bottom: 0.8rem;
+      position: relative;
+      z-index: 2;
+      line-height: 1.3;
+    }
+
+    .consumption-value {
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: rgb(138, 238, 158);
+      margin-bottom: 0.2rem;
+      position: relative;
+      z-index: 2;
+      line-height: 1;
+    }
+
+    .consumption-unit {
+      font-size: 1.1rem;
+      color: rgb(138, 238, 158);
+      position: relative;
+      z-index: 2;
+      margin-bottom: 0.5rem;
+      line-height: 1.2;
+    }
+
+    .explanation {
+      background: white;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 0.8rem;
+      border-left: 4px solid rgb(138, 238, 158);
+    }
+
+    .explanation h3 {
+      color: #333;
+      margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
+
+    .explanation p {
+      color: #666;
+      line-height: 1.8;
+      margin-bottom: 1.2rem;
+      font-size: 1.6rem;
+      font-size: 1.4rem;
+    }
+    
+    .logo-container {
+      text-align: center;
+      margin: 10rem 0 2rem; /* Aumentando a margem superior para 10rem (160px) */
+    }
+    
+    .eneris-logo {
+      width: 500px; /* Aumentando o tamanho fixo para 500px */
+      max-width: 100%;
+      height: auto;
+      margin: 0 auto;
+      display: block;
+    }
+
+    .explanation strong {
+      color: #1a3d5c;
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+      
+      .left-panel, .right-panel {
+        width: 100%;
+      }
+      
+      .title {
+        font-size: 2.5rem;
+      }
+      
+      .consumption-value {
+        font-size: 3rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="left-panel">
+      <h1 class="title">
+        Mapeamento<br>
+        <span class="highlight">de cargas</span>
+      </h1>
+      
+      <div id="info-content">
+        <p>Carregando dados...</p>
+      </div>
+    </div>
+
+    <div class="right-panel">
+      <div class="scenarios-header">
+        <h2 class="scenarios-title">CENÁRIOS DE AUTONOMIA</h2>
+      </div>
+
+      <div class="table-container">
+        <table id="scenarios-table">
+          <thead>
+            <tr>
+              <th>Cenários</th>
+              <th class="scenario-header">Full 100%<br><span class="kwh-value">0.00 kWh</span></th>
+              <th class="scenario-header">50%<br><span class="kwh-value">0.00 kWh</span></th>
+              <th class="scenario-header">30%<br><span class="kwh-value">0.00 kWh</span></th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!-- Conteúdo será preenchido via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="consumption-section">
+        <h3 class="consumption-title">Consumo médio por hora<br>estimado em</h3>
+        <div class="consumption-value" id="consumption-display">0,00</div>
+        <div class="consumption-unit">kW<br><small>por hora</small></div>
+        
+        <div class="explanation">
+          <h3>Informações importantes:</h3>
+          <p><strong>1 Bateria:</strong> tem <span id="battery-capacity">5,12</span> kWh de capacidade de armazenamento.</p>
+          <p><strong>Autonomia:</strong> foi calculada utilizando-se valores médios de consumo de energia. Esse consumo e, consequentemente a autonomia,  pode variar em função do uso dos eletrodomésticos ao longo do dia.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const nome = urlParams.get('nome') || "Cliente";
+    const consumoMensal = parseFloat(urlParams.get('consumo')) || 1800;
+    const precoPorKWh = 0.85;
+    const diasPorMes = 30;
+    const horasPorDia = 24;
+    const consumoDiario = consumoMensal / diasPorMes;
+    const potenciaMedia = consumoDiario * 1000 / horasPorDia;
+    const capacidadeBateria = 5.12;
+
+    // Cálculo das potências para cada cenário
+    const potencia100 = potenciaMedia;
+    const potencia50 = potencia100 * 0.5;
+    const potencia30 = potencia100 * 0.3;
+
+    const autonomia = (nBaterias, potencia) =>
+      (nBaterias * capacidadeBateria) / (potencia / 1000);
+
+    // Preenchimento do conteúdo da esquerda
+    const infoContent = `
+      <div class="bullet-point">
+        <div class="info-text">
+          Com base em informações enviadas, foi estimado um consumo médio de <strong>${parseInt(consumoMensal).toLocaleString('pt-BR')} kWh por mês</strong>. A partir disso, pressupõe-se um consumo diário de ${consumoDiario.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} kWh e <strong>${(potenciaMedia/1000).toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2})} kW por hora</strong>.
+        </div>
+      </div>
+      <div class="bullet-point">
+        <div class="info-text">
+          <p>Foram elaborados 3 cenários com diferentes níveis de consumo, pressupondo que, nos cenários 50% e 30%, somente um conjunto de equipamentos seria conectado à bateria.</p>
+        </div>
+      </div>
+      <div class="logo-container">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1498.64 256" class="eneris-logo">
+          <defs>
+            <linearGradient id="logo-gradient" x1="446.6" y1="285.47" x2="450.14" y2="53.83" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#fff" stop-opacity="0"/>
+              <stop offset=".13" stop-color="#f2fdf5" stop-opacity=".1"/>
+              <stop offset=".41" stop-color="#d3f8db" stop-opacity=".37"/>
+              <stop offset=".81" stop-color="#a2f1b2" stop-opacity=".79"/>
+              <stop offset="1" stop-color="#8aee9e"/>
+            </linearGradient>
+          </defs>
+          <path fill="#f6ffec" d="M128,256C53.05,256,0,203.44,0,128S55,0,129.46,0c70.08,0,121.67,47.7,121.67,115.83,0,10.22-.97,17.52-2.43,24.33H57.43c-10.22,0-15.57,4.38-15.57,13.14,0,30.17,35.04,67.65,87.12,67.65,33.1,0,64.73-13.63,79.82-42.34h39.42c-18.98,52.08-66.19,77.38-120.21,77.38ZM40.4,108.05h160.12c6.81,0,11.19-3.41,11.19-10.22,0-29.2-32.12-63.27-81.76-63.27S45.75,63.27,40.4,108.05Z"/>
+          <path fill="url(#logo-gradient)" d="M448.08,3.71c66.68,0,115.83,43.8,115.83,120.21v130.92h-38.94V124.41c0-54.02-32.61-82.74-76.9-82.74s-76.9,28.72-76.9,82.74v130.43h-38.94V123.92c0-76.41,49.16-120.21,115.83-120.21Z"/>
+          <path fill="#f6ffec" d="M763.75,256c-74.95,0-128-52.56-128-128S690.75,0,765.21,0c70.08,0,121.67,47.7,121.67,115.83,0,10.22-.97,17.52-2.43,24.33h-191.27c-10.22,0-15.57,4.38-15.57,13.14,0,30.17,35.04,67.65,87.12,67.65,33.1,0,64.73-13.63,79.82-42.34h39.42c-18.98,52.08-66.19,77.38-120.21,77.38ZM676.15,108.05h160.12c6.81,0,11.19-3.41,11.19-10.22,0-29.2-32.12-63.27-81.76-63.27s-84.2,28.72-89.55,73.49Z"/>
+          <path fill="#f6ffec" d="M1100.54,4.87v37.96h-22.39c-50.13,0-86.14,31.64-86.14,86.63v121.67h-38.93v-121.67c0-82.74,51.1-124.59,125.08-124.59h22.39Z"/>
+          <path fill="#f6ffec" d="M1200.3,4.87v246.27h-38.93V4.87h38.93Z"/>
+          <path fill="#f6ffec" d="M1273.79,174.24h41.37c9.25,34.56,41.37,47.7,77.87,47.7s66.19-12.65,66.19-41.37c0-23.36-18.5-34.56-45.26-36.01l-54.02-3.89c-44.78-2.92-78.36-23.85-78.36-67.16,0-49.16,44.29-73.49,99.77-73.49s99.77,21.42,113.4,75.44h-41.37c-12.17-32.61-45.26-41.37-72.03-41.37-34.07,0-60.35,11.19-60.35,37.96,0,23.36,17.52,32.61,44.78,34.56l53.54,3.41c49.64,3.41,79.33,26.28,79.33,68.14,0,51.1-45.75,77.87-107.07,77.87s-107.07-26.28-117.78-81.76Z"/>
+        </svg>
+      </div>
+    `;
+
+    document.getElementById('info-content').innerHTML = infoContent;
+
+    // Preenchimento da tabela
+    const tableBody = `
+      <tr>
+        <td class="scenario-name">3 baterias</td>
+        <td>${Math.round(autonomia(3, potencia100))} horas</td>
+        <td>${Math.round(autonomia(3, potencia50))} horas</td>
+        <td>${Math.round(autonomia(3, potencia30))} horas</td>
+      </tr>
+      <tr>
+        <td class="scenario-name">2 baterias</td>
+        <td>${Math.round(autonomia(2, potencia100))} horas</td>
+        <td>${Math.round(autonomia(2, potencia50))} horas</td>
+        <td>${Math.round(autonomia(2, potencia30))} horas</td>
+      </tr>
+      <tr>
+        <td class="scenario-name">1 bateria</td>
+        <td>${Math.round(autonomia(1, potencia100))} horas</td>
+        <td>${Math.round(autonomia(1, potencia50))} horas</td>
+        <td>${Math.round(autonomia(1, potencia30))} horas</td>
+      </tr>
+
+    `;
+
+    document.getElementById('table-body').innerHTML = tableBody;
+    // Exibe o consumo médio em kW com 2 casas decimais
+    document.getElementById('consumption-display').textContent = (potenciaMedia / 1000).toFixed(2).replace('.', ',');
+    document.getElementById('battery-capacity').textContent = capacidadeBateria.toFixed(2).replace('.', ',');
+    
+    // Atualiza os valores de kWh no cabeçalho
+    document.querySelectorAll('.kwh-value')[0].textContent = (potencia100 / 1000).toFixed(2).replace('.', ',') + ' kWh';
+    document.querySelectorAll('.kwh-value')[1].textContent = (potencia50 / 1000).toFixed(2).replace('.', ',') + ' kWh';
+    document.querySelectorAll('.kwh-value')[2].textContent = (potencia30 / 1000).toFixed(2).replace('.', ',') + ' kWh';
+  </script>
+</body>
+</html>

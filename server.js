@@ -114,7 +114,9 @@ async function renderTemplate(browser, templateFile, params) {
 
 // Captura screenshot de uma page já renderizada
 async function takeScreenshot(page) {
-  const screenshot = await page.screenshot({ fullPage: true, type: 'png' });
+  const raw = await page.screenshot({ fullPage: true, type: 'png' });
+  // Puppeteer v23+ retorna Uint8Array — precisamos de Buffer para .toString('base64')
+  const screenshot = Buffer.from(raw);
   console.log(`[screenshot] ${screenshot.length} bytes`);
 
   // Valida magic bytes PNG
